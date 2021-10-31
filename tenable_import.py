@@ -137,8 +137,7 @@ for manifest_file in manifests:
             try:
                 #decrypt_file(file_path + file + ".bin", length, file_path + file + ".key", 
                 #           private_key_file, private_key_password, "result.txt")
-                data = crypt.decrypt_file_to_data(file_path + file + ".bin", length, file_path + file + ".key", 
-                            private_key_file, private_key_password)
+                data = crypt.decrypt_file_to_data(file_path + file + ".bin", length, file_path + file + ".key")
 
                 response = sc.HTTPUpload(data)
                 print("debug --- response:" + str(response) + " data:" + str(response.json()))
@@ -157,9 +156,10 @@ for manifest_file in manifests:
 
             if response.status_code == 200:
                 index = index + 1
-                # remove file
+                # remove files (key and binary)
                 try:
-                    os.remove(file_path + file)
+                    os.remove(file_path + file + ".key")
+                    os.remove(file_path + file + ".bin")
                 except Exception as e:
                     print("exception while removing imported file. error:" + str(e))
 
@@ -172,7 +172,8 @@ for manifest_file in manifests:
         print("warning: not all files imported. Imported: %d, expected: %d" % (index, count))
     else:
         print("all files imported. Imported: %d" % index)
-        #remove the parsed manifest
+        #remove the parsed manifest and signature
+        os.remove(manifest_file + ".sig")
         os.remove(manifest_file)
 
 
