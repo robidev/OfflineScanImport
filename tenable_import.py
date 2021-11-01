@@ -8,7 +8,7 @@
 #   usage:      python3 tenable_import.py or python3 tenable_import.py [config_file.ini]
 #
 #   notes:      fill in the following variables:
-#               file_path               <-- location where files to import should found
+#               file_path               <-- location where files to import should found, trailing slash matters!
 #               manifest                <-- filter of files with scans to import
 #
 #               sc_host                 <-- base URL for tenable.sc, with trailing /

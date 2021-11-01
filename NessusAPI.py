@@ -44,7 +44,7 @@ class NessusAPI(object):
         data = r.json()
         for d in data["scans"]:
             for scan in scan_list:
-                if scan in d["name"]:
+                if scan == d["name"]:
                     print(scan + " is found, retrieving latest scan..")
                     scan_list.remove(scan)
                     s_name = d["name"]
@@ -80,8 +80,12 @@ class NessusAPI(object):
         data = result.json()
         if result.status_code != 200:
             print("error: history request failed")
-            return -1
+            return ""
   
+        if data['history'] == None:
+            print("error: no history found")
+            return ""
+
         history_list = []
         for d in data["history"]:
             history_list.append(int(d['history_id']))
