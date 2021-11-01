@@ -25,7 +25,7 @@ class NessusAPI(object):
     # Initializer / Instance Attributes
     def __init__(self, nessus_url: str, access_key: str, secret_key: str, proxies: str = None):
         self.nessus_url = nessus_url
-        self.apikey = "accesskey=" + access_key + "; secretkey=" + secret_key
+        self.apikey = "accessKey=" + access_key + "; secretKey=" + secret_key
         self.proxies = proxies
         self.headers = {}
         self.headers['content-type']= 'application/json'
