@@ -103,22 +103,31 @@ crypt = Crypto.Crypto(public_key_file,private_key_file, private_key_password)
 # Export files between now, and a week ago into export_folder #
 ###############################################################
 
-try:
-  with open(scan_filename) as scan_file:
-    scan_list = scan_file.read().splitlines()
-except Exception as e:
-  print("error while opening " + scan_filename + ". error:" + str(e))
-  sys.exit(1)
+if scan_filename == "":
+  scan_list = None
 
+  if days == None:
+    print('Searching for all scan(s) in all time periods')
+  else:
+    print('Searching for all scan(s) in time period: ' + file_date(time_period) + " until " + file_date(current_time))
 
-if len(scan_list) == 0:
-  print("No scans in scan list. nothing to be done")
-  sys.exit(0)
-  
-if days == None:
-  print('Searching for scan(s): "'+str(scan_list) + " in all time periods")
 else:
-  print('Searching for scan(s): "'+str(scan_list) + " in time period: " + file_date(time_period) + " until " + file_date(current_time))
+  try:
+    with open(scan_filename) as scan_file:
+      scan_list = scan_file.read().splitlines()
+  except Exception as e:
+    print("error while opening " + scan_filename + ". error:" + str(e))
+    sys.exit(1)
+
+  if len(scan_list) == 0:
+    print("No scans in scan list. nothing to be done")
+    sys.exit(0)
+
+  if days == None:
+    print('Searching for scan(s): "'+str(scan_list) + " in all time periods")
+  else:
+    print('Searching for scan(s): "'+str(scan_list) + " in time period: " + file_date(time_period) + " until " + file_date(current_time))
+
 export_list = nessus.get_scans(scan_list, time_period, export_type)
 
 if len(export_list) == 0:

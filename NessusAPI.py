@@ -32,7 +32,7 @@ class NessusAPI(object):
         self.headers['x-apikeys']= self.apikey
         
     # retrieve scans from list
-    def get_scans(self, scan_list: list, time_period: int ,export_type: str) -> list:
+    def get_scans(self, scan_list: list, time_period: int, export_type: str) -> list:
         export_list = []
 
         r = requests.get(self.nessus_url+'/scans', proxies=self.proxies, headers=self.headers, verify=False)
@@ -42,36 +42,59 @@ class NessusAPI(object):
             return []
 
         data = r.json()
-        for d in data["scans"]:
-            for scan in scan_list:
-                if scan == d["name"]:
-                    print(scan + " is found, retrieving latest scan..")
-                    scan_list.remove(scan)
-                    s_name = d["name"]
-                    s_id = str(d["id"])
         
-                    h_id = self.get_latest_scan(s_id,time_period)
-                    if h_id == "": # if scan does not contain history, abort
-                        break
-          
-                    #perform the export of the latest scan
-                    post_url = self.nessus_url+'/scans/' + s_id + '/export?history_id=' + h_id
-                    report_data = '{"filter.search_type":"or","format":"'+export_type+'"}'
-                    p = requests.post(post_url, proxies=self.proxies, headers=self.headers, data=report_data, verify=False)
-                    if p.status_code == 200:
-                        file_data = p.json()
-                        report_file = str(file_data["file"])
-                        export_list.append({'name':s_name,'scan_id':s_id,'report_file':report_file})
-                    else:
-                        print('error: export request failed:' + post_url)
-                        print(p.status_code)
-          
-        if len(scan_list) > 0:
-            print("could not find scan(s): " + str(scan_list))
+        if scan_list != None:
+            print("exporting only scans listed in scan_list")
         else:
-            print("all scans found")
+            allscans = ""
+            for d in data["scans"]:
+                allscans = allscans + d["name"] + "\n"
+            print("scan_list is None, exporting all scans: " + allscans)
+        
+        for d in data["scans"]:
+            if scan_list != None:
+                for scan in scan_list:
+                    if scan == d["name"]:
+                        print(scan + " is found, retrieving latest scan..")
+                        scan_list.remove(scan)
+                        report_file = self.get_scan(str(d["id"]), time_period, export_type)
+                        if report_file != None:
+                            export_list.append({'name':d["name"],'scan_id':str(d["id"]),'report_file':report_file})
+            else:
+                print("for " + d["name"] + " in all scans, retrieving latest scan..")
+                report_file = self.get_scan(str(d["id"]), time_period, export_type)
+                if report_file != None:
+                    export_list.append({'name':d["name"],'scan_id':str(d["id"]),'report_file':report_file})
+        
+        if scan_list != None:
+            if len(scan_list) > 0:
+                print("could not find scan(s): " + str(scan_list))
+            else:
+                print("all scans found")
+        else:
+            print("all scans exported")
+            
         return export_list
+        
 
+    def get_scan(self, s_id: str, time_period: int, export_type: str):
+        h_id = self.get_latest_scan(s_id,time_period)
+        if h_id == "": # if scan does not contain history, abort
+            return None
+
+        #perform the export of the latest scan
+        post_url = self.nessus_url+'/scans/' + s_id + '/export?history_id=' + h_id
+        report_data = '{"filter.search_type":"or","format":"'+export_type+'"}'
+        p = requests.post(post_url, proxies=self.proxies, headers=self.headers, data=report_data, verify=False)
+        if p.status_code == 200:
+            file_data = p.json()
+            report_file = str(file_data["file"])
+            return report_file
+        else:
+            print('error: export request failed:' + post_url)
+            print(p.status_code)
+            return None
+            
 
     #   Set up the scans to queue based on the search criteria
     def get_latest_scan(self,scan_id: str,time_period: int) -> int:
